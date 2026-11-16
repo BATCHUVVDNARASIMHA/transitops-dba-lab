@@ -47,8 +47,8 @@ plan-quality problems.
 |---|---|
 | Symptom | The same procedure is fast for most stops and very slow for the hub. |
 | Diagnosis | The plan is compiled for the first parameter value and reused. A plan built for 50 rows (index seek plus key lookup) is reused for half a million rows. |
-| Fix A | `OPTION (RECOMPILE)` on the statement. |
-| Fix B | SQL Server 2022 Parameter Sensitive Plan optimization, which keeps several plans per statement. The lab turns it off to reproduce the problem, then on again, and records both. |
+| Fix | `OPTION (RECOMPILE)` on the statement: a fresh plan per call. This is the fix the tests assert. |
+| Also measured | SQL Server 2022 Parameter Sensitive Plan (PSP) optimization, which can keep several plans per statement. The lab turns it off to reproduce the problem, then on again, and repeats the calls. In the recorded run it made no difference here: the hub call still used the plan compiled for the rare stop. PSP engages only when the optimizer's own skew thresholds are met, so it does not replace fixing the query. The Extended Events event `parameter_sensitive_plan_optimization_skipped_reason` reports the reason whenever the feature is skipped. |
 | Rejected | Forcing a single plan: that only chooses who gets the bad plan. |
 
 ## Lab 5: blocking

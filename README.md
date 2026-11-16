@@ -17,6 +17,28 @@ checks that every one of those things really happened.
 Nothing in the results is typed by hand. The lab writes its own evidence report
 from the log tables it filled while running.
 
+## Results
+
+Measured by the lab itself and written to [docs/evidence/lab-report.md](docs/evidence/lab-report.md).
+The figures below are from the GitHub Actions run of 2026-11-16 on SQL Server 2022
+(16.0.4325.4, CU28). Timings vary by host.
+
+| Scenario | Result |
+|---|---|
+| Assertions | 44 of 44 passed |
+| Backups | Every full, differential and log backup taken with CHECKSUM and verified; log chain with no gaps |
+| Point-in-time recovery | Fleet-wide bad UPDATE undone: 4 backup files restored with STOPAT, 624 rows repaired and verified against the pre-incident checksum |
+| DR drill | Full chain (6 backup files) restored in 6 s against a 3,600 s RTO; DBCC CHECKDB clean; row counts match production |
+| Lab 1, missing index | 12,363 logical reads down to 32 (386x) |
+| Lab 2, implicit conversion | 455 logical reads down to 6 (76x) |
+| Lab 3, function on an indexed column | 6,607 logical reads down to 81 (82x) |
+| Lab 4, parameter sniffing | 1,641,726 logical reads down to 6,607 (248x) |
+| Lab 5, blocking | Reader wait of 10,027 ms down to 0 ms |
+| Lab 6, deadlock | 1 deadlock captured with opposite lock order, 0 after the fix |
+| Index maintenance | 6 partitions rebuilt online, fragmentation from 99 percent to 0.2 percent |
+| Archiving | 252,714 rows moved to the archive by partition switch |
+| Security | Every persona tested by impersonation, including masking, row-level security and the audit trail |
+
 ## What it covers
 
 | DBA responsibility | Where | How it is proven |
