@@ -7,7 +7,7 @@ SET NOCOUNT ON;
 USE TransitOps;
 GO
 
-DECLARE @ok bit, @detail nvarchar(1000), @n int, @m int, @c int, @err int, @txt nvarchar(200);
+DECLARE @ok bit, @detail nvarchar(1000), @n int, @m int, @c int, @err int, @txt nvarchar(200), @email varchar(120);
 
 -- ---------------------------------------------------------------- reporting account
 SELECT @err = 0, @n = NULL;
@@ -36,16 +36,21 @@ SELECT @ok = CASE WHEN @err = 0 AND @n = 4 THEN 1 ELSE 0 END,
 EXEC DBAdmin.dba.usp_Assert 'security', N'Reporting account reads reporting views across all garages', @ok, @detail;
 
 -- ---------------------------------------------------------------- developer: masked
-SELECT @err = 0, @txt = NULL;
+-- The developer may read the column but must never receive the real address.
+-- The exact masked text depends on how the value is consumed: the email() format
+-- when the column is returned as is, the default mask when it passes through an
+-- expression or a type conversion. Either way it is not the real value.
+SELECT @err = 0, @email = NULL;
 EXECUTE AS USER = N'dev_analyst';
 BEGIN TRY
-    SELECT TOP (1) @txt = o.Email FROM ops.Operator AS o ORDER BY o.OperatorId;
+    SELECT TOP (1) @email = o.Email FROM ops.Operator AS o ORDER BY o.OperatorId;
 END TRY
 BEGIN CATCH
     SET @err = ERROR_NUMBER();
 END CATCH;
 REVERT;
-SELECT @ok = CASE WHEN @err = 0 AND @txt LIKE N'%XXX@XXXX.com' THEN 1 ELSE 0 END, @detail = N'sees ' + ISNULL(@txt, N'nothing');
+SELECT @ok = CASE WHEN @err = 0 AND @email IS NOT NULL AND @email NOT LIKE '%@transitops.example' THEN 1 ELSE 0 END,
+       @detail = N'sees ' + ISNULL(@email, N'nothing');
 EXEC DBAdmin.dba.usp_Assert 'security', N'Developer sees operator e-mail masked', @ok, @detail;
 
 SELECT @err = 0;

@@ -59,6 +59,9 @@ jobs:
           mkdir -p evidence
           if docker compose exec -T mssql bash /lab/scripts/report.sh > evidence/lab-report.md; then
             cat evidence/lab-report.md >> "$GITHUB_STEP_SUMMARY"
+            echo "-----BEGIN LAB REPORT-----"
+            cat evidence/lab-report.md
+            echo "-----END LAB REPORT-----"
           else
             echo "The report could not be generated because an earlier step failed." >> "$GITHUB_STEP_SUMMARY"
           fi

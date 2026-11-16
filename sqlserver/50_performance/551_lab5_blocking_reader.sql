@@ -9,7 +9,7 @@ SET NOCOUNT ON;
 USE TransitOps;
 GO
 
-DECLARE @Start  datetime2(3) = SYSDATETIME(),
+DECLARE @Start  datetime2(7) = SYSDATETIME(),
         @Phase  varchar(20)  = CAST(DBAdmin.dba.fn_GetConfig(N'LabPhase') AS varchar(20)),
         @Active int;
 
