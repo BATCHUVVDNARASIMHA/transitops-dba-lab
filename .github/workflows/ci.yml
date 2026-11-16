@@ -1,0 +1,80 @@
+name: lab
+
+# Starts SQL Server 2022 in a container and runs the whole lab against it:
+# deployment, backup and recovery drills, performance labs, maintenance,
+# change management, and the assertion suite. The evidence report is attached
+# to the run and shown in the run summary.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sqlserver-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Static checks
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          for f in scripts/*.sh; do bash -n "$f"; done
+
+      - name: Start SQL Server
+        run: docker compose up -d --wait --wait-timeout 300
+
+      - name: Deploy instance baseline, toolkit, database and security
+        run: docker compose exec -T mssql bash /lab/scripts/deploy.sh
+
+      - name: Backup chain, point-in-time recovery, DR drill, TEST refresh
+        run: docker compose exec -T mssql bash /lab/scripts/drill.sh
+
+      - name: Performance labs
+        run: docker compose exec -T mssql bash /lab/scripts/perf.sh
+
+      - name: Maintenance, archiving, Agent, health check
+        run: docker compose exec -T mssql bash /lab/scripts/maintain.sh
+
+      - name: Change management through TEST to production
+        run: docker compose exec -T mssql bash /lab/scripts/migrate.sh
+
+      - name: Tests
+        run: docker compose exec -T mssql bash /lab/scripts/test.sh
+
+      - name: Evidence report
+        if: always()
+        run: |
+          mkdir -p evidence
+          if docker compose exec -T mssql bash /lab/scripts/report.sh > evidence/lab-report.md; then
+            cat evidence/lab-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The report could not be generated because an earlier step failed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lab-evidence
+          path: evidence/
+          if-no-files-found: warn
+
+      - name: SQL Server log on failure
+        if: failure()
+        run: docker compose logs --tail 150 mssql
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

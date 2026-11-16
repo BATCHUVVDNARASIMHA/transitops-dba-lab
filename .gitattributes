@@ -1,0 +1,7 @@
+# The shell and SQL scripts run inside a Linux container. Keep LF line endings
+# on every platform, or bash fails on Windows checkouts.
+* text=auto eol=lf
+*.sh  text eol=lf
+*.sql text eol=lf
+*.ps1 text eol=lf
+*.png binary

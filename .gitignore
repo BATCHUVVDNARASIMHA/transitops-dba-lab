@@ -1,0 +1,10 @@
+.env
+*.bak
+*.trn
+*.dif
+*.sqlaudit
+*.xel
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,40 @@
+# TransitOps DBA lab: one SQL Server 2022 instance (Developer Edition) with SQL Server Agent.
+#
+#   docker compose up -d --wait
+#   docker compose exec -T mssql bash /lab/scripts/all.sh
+#
+# The repository is mounted read-only at /lab. Databases, backups and audit files
+# live in a named volume so they survive a container restart or an image upgrade.
+name: transitops-dba-lab
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:${MSSQL_IMAGE_TAG:-2022-latest}
+    platform: linux/amd64
+    container_name: transitops-mssql
+    hostname: transitops-sql01
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Copy .env.example to .env first}"
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      # Bound to localhost only. Connect with SSMS or Azure Data Studio at localhost,<port>.
+      - "127.0.0.1:${MSSQL_HOST_PORT:-14330}:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./:/lab:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          SQLCMD=/opt/mssql-tools18/bin/sqlcmd;
+          [ -x "$$SQLCMD" ] || SQLCMD=/opt/mssql-tools/bin/sqlcmd;
+          "$$SQLCMD" -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1" > /dev/null 2>&1 || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+
+volumes:
+  mssql_data:

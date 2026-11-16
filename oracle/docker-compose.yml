@@ -1,0 +1,24 @@
+# Oracle companion lab: Oracle Database Free in a container.
+#
+#   cd oracle
+#   cp .env.example .env
+#   docker compose up -d
+#   docker compose exec -T oracle bash /lab/run.sh
+#
+# The first start creates the database and takes a few minutes.
+name: transitops-oracle-lab
+
+services:
+  oracle:
+    image: container-registry.oracle.com/database/free:latest
+    container_name: transitops-oracle
+    environment:
+      ORACLE_PWD: "${ORACLE_PWD:?Copy .env.example to .env first}"
+    ports:
+      - "127.0.0.1:${ORACLE_HOST_PORT:-1521}:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./:/lab:ro
+
+volumes:
+  oracle_data:
