@@ -14,6 +14,15 @@ run_sql() {
     sqlplus -s -L "$CONNECT" @"$HERE/sql/$1" "${2:-unused}"
 }
 
+# Unified audit policies need AUDIT_ADMIN, which the DBA role does not include.
+printf '\n==> Grant AUDIT_ADMIN to SYSTEM in FREEPDB1\n'
+sqlplus -s / as sysdba <<'SQL'
+WHENEVER SQLERROR EXIT FAILURE
+ALTER SESSION SET CONTAINER = FREEPDB1;
+GRANT AUDIT_ADMIN TO system;
+EXIT
+SQL
+
 run_sql 01_schema.sql
 run_sql 02_security.sql "$ORACLE_PWD"
 run_sql 03_incident_flashback.sql

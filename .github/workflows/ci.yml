@@ -81,3 +81,35 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v
+
+  oracle-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: oracle
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space for the Oracle image
+        working-directory: .
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Start Oracle Database Free
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait --wait-timeout 900
+
+      - name: Run the Oracle lab
+        run: docker compose exec -T oracle bash /lab/run.sh
+
+      - name: Oracle log on failure
+        if: failure()
+        run: docker compose logs --tail 200 oracle
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
