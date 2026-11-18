@@ -33,6 +33,6 @@ The first start creates the database and takes a few minutes. Wait until
   E-Business Suite cannot run in a laptop container. The commands and checks for those
   environments are written up in [docs/platform-parity.md](../docs/platform-parity.md)
   as reference notes, and are labelled as such.
-- This module is run by hand. The GitHub Actions workflow covers the SQL Server lab only.
+- The GitHub Actions workflow runs this module on every push, in a separate job from the SQL Server lab.
 - The scripts connect as SYSTEM, not SYS. Flashback is not available to SYS, and
   routine administration should not use SYS in any case.

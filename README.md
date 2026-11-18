@@ -25,7 +25,7 @@ The figures below are from the GitHub Actions run of 2026-11-16 on SQL Server 20
 
 | Scenario | Result |
 |---|---|
-| Assertions | 44 of 44 passed |
+| Assertions | 44 of 44 passed (SQL Server); Oracle job passes in the same workflow |
 | Backups | Every full, differential and log backup taken with CHECKSUM and verified; log chain with no gaps |
 | Point-in-time recovery | Fleet-wide bad UPDATE undone: 4 backup files restored with STOPAT, 624 rows repaired and verified against the pre-incident checksum |
 | DR drill | Full chain (6 backup files) restored in 6 s against a 3,600 s RTO; DBCC CHECKDB clean; row counts match production |
@@ -38,6 +38,7 @@ The figures below are from the GitHub Actions run of 2026-11-16 on SQL Server 20
 | Index maintenance | 6 partitions rebuilt online, fragmentation from 99 percent to 0.2 percent |
 | Archiving | 252,714 rows moved to the archive by partition switch |
 | Security | Every persona tested by impersonation, including masking, row-level security and the audit trail |
+| Oracle (Oracle Database Free 23ai) | Same bad UPDATE repaired with Flashback Table (650 rows back to 554 active, 70 in shop, 26 retired); plan cost 1,641 to 11 with a local index; RMAN level 0 and level 1 backups with RESTORE VALIDATE passing |
 
 ## What it covers
 
@@ -219,7 +220,6 @@ docs/                       runbooks, lab write-ups, platform parity, generated 
 - Agent jobs are deployed disabled so an idle container does not fill its volume.
   Set `AgentJobsEnabled` to `1` in `DBAdmin.dba.Config` and rerun
   `180_agent_jobs.sql` to enable them.
-- The Oracle module is run by hand and is not part of the automated workflow.
 
 ## Data and affiliation
 
